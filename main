@@ -1,0 +1,53 @@
+import seaborn as sns
+sns.set_theme(style="whitegrid")
+
+pred_np = predictions.numpy()
+test_df = df.iloc[split_idx:].copy()
+test_dates = test_df.index
+test_prices = test_df["Close"]
+
+plt.figure(figsize=(18, 10))
+
+# --- MAIN PRICE PLOT ---
+ax = plt.subplot(2, 1, 1)
+ax.plot(test_dates, test_prices, color="black", linewidth=1.8, label="Close Price")
+
+# Shaded regions for predicted liquidity
+for date, pred in zip(test_dates, pred_np):
+    if pred == 1:  # GREEN
+        ax.axvspan(
+            date - pd.Timedelta(hours=36),
+            date + pd.Timedelta(hours=36),
+            color="green",
+            alpha=0.18
+        )
+    elif pred == 2:  # RED
+        ax.axvspan(
+            date - pd.Timedelta(hours=36),
+            date + pd.Timedelta(hours=36),
+            color="red",
+            alpha=0.18
+        )
+
+# Legend patches
+import matplotlib.patches as mpatches
+green_patch = mpatches.Patch(color='green', alpha=0.25, label='Predicted Easy (GREEN)')
+red_patch   = mpatches.Patch(color='red',   alpha=0.25, label='Predicted Hard (RED)')
+
+ax.legend(handles=[green_patch, red_patch], loc="upper left")
+ax.set_title(f"{ticker} Price with Predicted Liquidity Regimes (Forecast t+{H})", fontsize=16)
+ax.set_ylabel("Price")
+ax.grid(alpha=0.3)
+
+# --- SECOND SUBPLOT: PREDICTION TIMELINE ---
+ax2 = plt.subplot(2, 1, 2, sharex=ax)
+
+ax2.plot(test_dates, pred_np, color="blue", linewidth=1.2)
+ax2.set_yticks([0, 1, 2])
+ax2.set_yticklabels(["NORMAL", "GREEN", "RED"])
+ax2.set_title("Predicted Liquidity Regime Timeline")
+ax2.set_xlabel("Date")
+ax2.grid(alpha=0.3)
+
+plt.tight_layout()
+plt.show()
